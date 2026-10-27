@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KubeWatch Console</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0d141d;
+      --panel:#121c27;
+      --panel-2:#172331;
+      --line:#243243;
+      --line-2:#314156;
+      --ink:#e6edf5;
+      --muted:#91a0b1;
+      --accent:#7aa2f7;
+      --accent-soft:rgba(122,162,247,.14);
+      --ok-bg:#182634;
+      --warn-bg:#272116;
+      --fail-bg:#2a1d20;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at top right, rgba(122,162,247,.08), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(122,162,247,.05), transparent 22%),
+        var(--bg);
+      color:var(--ink);
+      font-family:'Manrope',system-ui,sans-serif;
+      font-size:14px;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    .app-shell{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:92px minmax(0,1fr);
+    }
+    .rail{
+      background:rgba(14,22,31,.92);
+      border-right:1px solid var(--line);
+      padding:18px 14px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+    }
+    .brand-mark{
+      width:48px;height:48px;border-radius:14px;
+      display:grid;place-items:center;
+      background:linear-gradient(180deg,#1d2a3a,#152130);
+      border:1px solid var(--line-2);
+      font-weight:800;font-size:18px;letter-spacing:.02em;
+    }
+    .rail-menu{display:flex;flex-direction:column;gap:10px;width:100%}
+    .navbtn{
+      width:100%;
+      border:1px solid transparent;
+      background:transparent;
+      color:var(--muted);
+      border-radius:14px;
+      padding:12px 8px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      transition:.18s ease;
+      font-size:11px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      font-weight:700;
+    }
+    .navbtn .icon{font-size:18px;line-height:1}
+    .navbtn.active,.navbtn:hover{
+      color:var(--ink);
+      background:var(--accent-soft);
+      border-color:#355285;
+    }
+    .rail-note{
+      margin-top:auto;
+      font-size:11px;
+      color:var(--muted);
+      text-align:center;
+      line-height:1.6;
+    }
+    .main{
+      padding:22px 26px 28px;
+    }
+    .appbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:20px;
+    }
+    .title-stack small{
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-size:11px;
+      font-weight:700;
+    }
+    h1{margin:6px 0 0;font-size:28px;letter-spacing:-.04em;font-weight:800}
+    .subline{margin-top:4px;color:var(--muted)}
+    .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .status-badge{
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid var(--line-2);
+      background:#121a24;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:700;
+    }
+    .status-badge.online{background:var(--accent-soft);border-color:#355285;color:var(--ink)}
+    .workspace-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1.85fr) minmax(320px,.95fr);
+      gap:16px;
+    }
+    .stack{display:grid;gap:16px}
+    .panel{
+      background:linear-gradient(180deg,rgba(18,28,39,.98),rgba(18,28,39,.94));
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 12px 32px rgba(0,0,0,.12);
+    }
+    .panel-body{padding:18px 18px 16px}
+    .panel-head{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:16px 18px 0;
+    }
+    .panel-title{margin:0;font-size:15px;font-weight:800;letter-spacing:-.01em}
+    .panel-subtitle{margin-top:4px;color:var(--muted);font-size:12px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .kpi{
+      min-height:112px;
+      padding:18px;
+      background:linear-gradient(180deg,var(--panel-2),#111a25);
+      border:1px solid var(--line);
+      border-radius:16px;
+    }
+    .kpi-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+    .kpi-value{margin-top:12px;font-size:30px;letter-spacing:-.05em;font-weight:800}
+    .kpi-foot{margin-top:8px;color:var(--muted);font-size:12px}
+    .split-2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:16px}
+    .bars-wrap{padding-top:8px}
+    .bars{
+      display:flex;align-items:flex-end;gap:8px;height:180px;
+      padding:10px 4px 0;border-bottom:1px solid var(--line-2);
+    }
+    .bar{flex:1;min-width:12px;border-radius:10px 10px 0 0;background:linear-gradient(180deg,#8fb0fa 0%, #6f8fdb 100%);opacity:.94}
+    .meta-list{display:grid;gap:0}
+    .meta-row{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:14px 0;border-bottom:1px solid var(--line)}
+    .meta-row:last-child{border-bottom:0}
+    .muted{color:var(--muted)}
+    .caption{font-size:12px;color:var(--muted)}
+    .tag{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);
+      background:#17212c;color:var(--ink);font-size:11px;font-weight:700;
+    }
+    .tag.ok{background:var(--ok-bg)}
+    .tag.warn{background:var(--warn-bg)}
+    .tag.fail{background:var(--fail-bg)}
+    .mono,
+    .monospace{
+      font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+      font-size:12px;
+      line-height:1.7;
+    }
+    .monospace{
+      background:#0f1822;border:1px solid var(--line);
+      border-radius:14px;padding:14px;white-space:pre-wrap;max-height:290px;overflow:auto;color:#dbe5f0;
+    }
+    .table{--bs-table-color:var(--ink);--bs-table-bg:transparent;--bs-table-border-color:var(--line);--bs-table-hover-bg:#182332;--bs-table-hover-color:var(--ink);margin-bottom:0;font-size:12px}
+    .table th{color:var(--muted);font-weight:800;letter-spacing:.06em;font-size:11px}
+    .table-scroll{max-height:380px;overflow:auto;border-top:1px solid var(--line)}
+    .empty{padding:28px 12px;text-align:center;color:var(--muted)}
+    .surface-inline{background:#0f1822;border:1px solid var(--line);border-radius:14px;padding:14px}
+    .form-control,.form-select{background:#0f1822;border:1px solid var(--line-2);color:var(--ink);border-radius:12px;padding:.75rem .9rem}
+    .form-control::placeholder{color:#718197}
+    .form-control:focus,.form-select:focus{background:#0f1822;color:var(--ink);border-color:var(--accent);box-shadow:0 0 0 .14rem rgba(122,162,247,.18)}
+    .form-label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+    .btn-accent{background:var(--accent);border:1px solid #88adfb;color:#07111f;font-weight:800;border-radius:12px;padding:.68rem 1rem}
+    .btn-accent:hover{background:#8cb0fb;color:#07111f}
+    .btn-ghost{background:#131d29;border:1px solid var(--line-2);color:var(--ink);font-weight:700;border-radius:12px;padding:.68rem 1rem}
+    .btn-ghost:hover{background:#192434;color:var(--ink)}
+    .btn-tab{background:#131d29;border:1px solid var(--line);color:var(--muted);padding:.55rem .85rem;border-radius:12px;font-size:12px;font-weight:700}
+    .btn-tab:hover{color:var(--ink);border-color:var(--line-2)}
+    .notice{padding:13px 15px;border-radius:14px;border:1px solid #314156;background:#101a25;color:var(--muted);font-size:12px}
+    .table td{word-break:break-word;max-width:320px}
+    #toast{position:fixed;right:18px;bottom:18px;z-index:30;display:none;background:#131e2a;border:1px solid var(--line-2);color:var(--ink);padding:13px 15px;border-radius:14px;max-width:360px;box-shadow:0 14px 32px rgba(0,0,0,.22)}
+    code{font-family:'IBM Plex Mono',monospace;color:#dce8f8}
+    @media (max-width:1200px){
+      .workspace-grid,.split-2{grid-template-columns:1fr}
+      .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media (max-width:820px){
+      .app-shell{grid-template-columns:1fr}
+      .rail{padding:14px 12px;border-right:0;border-bottom:1px solid var(--line);flex-direction:row;justify-content:space-between;align-items:flex-start}
+      .rail-menu{flex-direction:row;flex-wrap:wrap;justify-content:center}
+      .navbtn{width:72px}
+      .rail-note{display:none}
+      .main{padding:18px 14px 24px}
+      .appbar{flex-direction:column;align-items:flex-start}
+    }
+    @media (max-width:640px){
+      .kpi-grid{grid-template-columns:1fr}
+      .panel-head,.panel-body{padding-left:14px;padding-right:14px}
+    }
+    [hidden]{display:none!important}
+    /* KubeWatch visual system */
+    :root{--bg:#0b1017;--panel:#151c25;--panel-2:#19212c;--line:#2b3543;--line-2:#3a4655;--ink:#e8e9e7;--muted:#a5abb0;--accent:#d6d8d0;--accent-soft:rgba(214,216,208,.10)}
+    body{background:#0b1017;color:var(--ink)}
+    .main{max-width:1760px;width:100%;margin:auto;padding:31px 36px}
+    .rail{background:#10161e;border-right-color:#2a333d;gap:32px;padding-top:24px}
+    .brand-mark{background:#d8d9d2;color:#111820;border:none;border-radius:11px;letter-spacing:-.08em}
+    .navbtn{border-radius:10px;font-size:10px;letter-spacing:.1em}
+    .navbtn.active,.navbtn:hover{background:#26303a;border-color:#3b4651;color:#f4f4f1}
+    .title-stack small{color:#d4d7d1;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em}
+    h1{font-size:34px;letter-spacing:-.055em}
+    .subline{max-width:590px;font-size:13px}
+    .appbar{border-bottom:1px solid var(--line);padding-bottom:25px;margin-bottom:25px}
+    .status-badge{border-radius:8px;padding:9px 13px;font-family:'IBM Plex Mono',monospace;font-weight:500}
+    .status-badge.online{background:#263129;border-color:#4f6052;color:#e8e9e7}
+    .panel{background:#151c25;border-color:#2b3543;border-radius:12px;box-shadow:none}
+    .kpi{background:#171f29;border-color:#2b3543;border-radius:12px;min-height:125px}
+    .kpi-label{font-size:10px;font-weight:700;letter-spacing:.13em}
+    .kpi-value{font-size:36px;font-weight:500;letter-spacing:-.07em}
+    .kpi-foot{font-size:11px}
+    .panel-title{font-size:14px;font-weight:800}
+    .panel-subtitle{font-size:11px}
+    .bars{height:205px;gap:12px;background:repeating-linear-gradient(to top, transparent 0, transparent 49px, rgba(173,185,197,.08) 50px)}
+    .bar{border-radius:3px 3px 0 0;background:#c4c9c2;opacity:.84;transition:height .25s ease,opacity .2s}
+    .bar:hover{opacity:1}
+    .chart-axis{display:flex;gap:12px;margin-top:9px;min-height:24px}
+    .chart-axis-label{flex:1;min-width:12px;text-align:center;color:#b0b7be;font:10px 'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tag{background:#202a34;border-color:#38414a;color:#e1e3e1;border-radius:6px}
+    .tag.ok,.tag.warn,.tag.fail{color:#e1e3e1;border-color:#414b55;background:#242d37}
+    .btn-accent{color:#12171c;background:#d6d8d0;border-color:#d6d8d0}
+    .btn-accent:hover{color:#12171c;background:#e7e8e2}
+    .btn-ghost,.btn-tab{border-radius:8px;background:#1b242f}
+    .btn-tab:hover{background:#27313e}
+    .form-control,.form-select{border-radius:8px}
+    .form-control:focus,.form-select:focus{border-color:#bcc5bf;box-shadow:0 0 0 .12rem rgba(214,216,208,.15)}
+    .monospace{background:#101721;border-radius:8px;color:#d8ddd9}
+    .surface-inline{background:#101721}
+    @media(max-width:820px){.main{padding:18px 14px 24px}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail">
+      <div class="brand-mark">KW</div>
+      <div class="rail-menu">
+        <button class="navbtn active" data-target="dashboard"><span class="icon">▥</span><span>Overview</span></button>
+        <button class="navbtn" data-target="cluster"><span class="icon">⬢</span><span>Cluster</span></button>
+        <button class="navbtn" data-target="linux"><span class="icon">≡</span><span>Host</span></button>
+        <button class="navbtn" data-target="connections"><span class="icon">◎</span><span>Access</span></button>
+      </div>
+      <div class="rail-note"><span class="mono">01 / OPS</span></div>
+    </aside>
+
+    <main class="main">
+      <div class="appbar">
+        <div class="title-stack">
+          <small>KubeWatch Console</small>
+          <h1 id="pageTitle">Environment overview</h1>
+          <div class="subline" id="pageDescription">Host diagnostics and Kubernetes runtime data in a single workspace.</div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-ghost" onclick="refresh()">Refresh</button>
+          <span id="status" class="status-badge">Offline</span>
+        </div>
+      </div>
+
+      <section id="dashboard" class="page stack">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-label">Cluster nodes</div><div class="kpi-value mono" id="metricNodes">—</div><div class="kpi-foot">Registered nodes</div></div>
+          <div class="kpi"><div class="kpi-label">Running pods</div><div class="kpi-value mono" id="metricPods">—</div><div class="kpi-foot">All namespaces</div></div>
+          <div class="kpi"><div class="kpi-label">Workload issues</div><div class="kpi-value mono" id="metricIssues">—</div><div class="kpi-foot">Non-running pods</div></div>
+          <div class="kpi"><div class="kpi-label">Deployments</div><div class="kpi-value mono" id="metricDeploy">—</div><div class="kpi-foot">Across namespaces</div></div>
+        </div>
+
+        <div class="workspace-grid">
+          <div class="stack">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3 class="panel-title">Namespace distribution</h3>
+                  <div class="panel-subtitle">Distribution across active namespaces</div>
+                </div>
+                <span class="tag mono" id="landscapeTag">No data</span>
+              </div>
+              <div class="panel-body">
+                <div class="bars-wrap"><div class="bars" id="bars"></div><div class="chart-axis" id="chartLabels"></div></div>
+              </div>
+            </div>
+
+            <div class="split-2">
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h3 class="panel-title">Recent events</h3>
+                    <div class="panel-subtitle">Cluster event stream</div>
+                  </div>
+                </div>
+                <div class="panel-body" id="eventSummary">
+                  <div class="empty">No events to display.</div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h3 class="panel-title">Host snapshot</h3>
+                    <div class="panel-subtitle">Uptime · memory · storage</div>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <pre class="monospace" id="hostSummary">No host data.</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3 class="panel-title">Session state</h3>
+                  <div class="panel-subtitle">Access and readiness</div>
+                </div>
+              </div>
+              <div class="panel-body meta-list">
+                <div class="meta-row"><span class="muted">Connection</span><strong id="statusConnection">Not connected</strong></div>
+                <div class="meta-row"><span class="muted">Kubernetes</span><strong id="statusKube">Unknown</strong></div>
+                <div class="meta-row"><span class="muted">Open workload issues</span><strong id="statusIssues">—</strong></div>
+                <div class="meta-row"><span class="muted">Ready nodes</span><strong id="statusReady">—</strong></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3 class="panel-title">Log alerts</h3>
+                  <div class="panel-subtitle">Recent matched patterns</div>
+                </div>
+              </div>
+              <div class="panel-body" id="logAlerts">
+                <div class="empty">No alert matches.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="cluster" class="page stack" hidden>
+        <div class="notice">Load a kubeconfig for the active environment, then browse nodes, pods, deployments, events, and node metrics.</div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 class="panel-title">Resource browser</h3>
+              <div class="panel-subtitle">Switch between Kubernetes resource types</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn-tab" onclick="renderTable('nodes')">Nodes</button>
+              <button class="btn-tab" onclick="renderTable('pods')">Pods</button>
+              <button class="btn-tab" onclick="renderTable('deployments')">Deployments</button>
+              <button class="btn-tab" onclick="renderTable('events')">Events</button>
+            </div>
+          </div>
+          <div class="panel-body pt-3" id="clusterTable">
+            <div class="empty">No cluster data loaded.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 class="panel-title">Node utilization</h3>
+              <div class="panel-subtitle">Output from kubectl top</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <pre class="monospace" id="topOutput">Metrics output unavailable.</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="linux" class="page stack" hidden>
+        <div class="split-2">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3 class="panel-title">Host overview</h3>
+                <div class="panel-subtitle">Uptime, memory, disk, and system summary</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <pre class="monospace" id="linuxOverview">Connect to an environment to view host output.</pre>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3 class="panel-title">Top processes</h3>
+                <div class="panel-subtitle">Highest CPU consumers</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <pre class="monospace" id="linuxProcesses">Process data unavailable.</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 class="panel-title">Recent journal output</h3>
+              <div class="panel-subtitle">System log excerpt</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <pre class="monospace" id="linuxJournal">Journal output unavailable.</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="connections" class="page stack" hidden>
+        <div class="workspace-grid">
+          <div class="stack">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3 class="panel-title">Environment connection</h3>
+                  <div class="panel-subtitle">Connect to the local host or a remote Linux environment over SSH</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <form id="connectForm" class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label" for="mode">Connection mode</label>
+                    <select class="form-select" id="mode">
+                      <option value="local">Local machine</option>
+                      <option value="ssh">SSH</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4" id="sshFields" hidden>
+                    <div class="row g-3">
+                      <div class="col-12">
+                        <label class="form-label" for="host">Host / IP address</label>
+                        <input class="form-control" id="host" type="text" placeholder="192.168.1.20">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label" for="port">Port</label>
+                        <input class="form-control" id="port" type="number" value="22">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label" for="username">Username</label>
+                        <input class="form-control" id="username" type="text" placeholder="ubuntu">
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label" for="password">Password</label>
+                        <input class="form-control" id="password" type="password" placeholder="Enter password">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end gap-2 flex-wrap">
+                    <button class="btn btn-accent" type="submit">Connect</button>
+                    <button class="btn btn-ghost" type="button" onclick="disconnect()">Disconnect</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3 class="panel-title">Kubernetes configuration</h3>
+                  <div class="panel-subtitle">Attach a kubeconfig for the current session</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <form id="kubeForm" class="row g-3 align-items-end">
+                  <div class="col-md-8">
+                    <label class="form-label" for="kubeFile">Kubeconfig file</label>
+                    <input class="form-control" id="kubeFile" type="file">
+                  </div>
+                  <div class="col-md-4">
+                    <button class="btn btn-accent w-100" type="submit">Attach kubeconfig</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3 class="panel-title">Connection notes</h3>
+                  <div class="panel-subtitle">Requirements for remote access</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="surface-inline caption">
+                  <div class="mb-2"><strong class="d-block text-light mb-1">Linux host</strong>Remote environments should have standard utilities such as <code>free</code>, <code>df</code>, <code>ps</code>, and <code>journalctl</code>.</div>
+                  <div class="mb-2"><strong class="d-block text-light mb-1">Kubernetes</strong>Cluster views depend on a working <code>kubectl</code> installation and a valid kubeconfig with sufficient access.</div>
+                  <div><strong class="d-block text-light mb-1">WSL</strong>Running the API inside WSL and using a local connection is the simplest setup.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

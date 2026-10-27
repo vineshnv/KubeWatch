@@ -1,0 +1,1 @@
+"""KubeWatch observability application."""
